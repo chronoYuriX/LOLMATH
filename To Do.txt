@@ -1,0 +1,6 @@
+1. add a parser
+2. build a html gdi
+2.1. socket & local server
+2.2. javascript socket client
+2.3 GUI
+
