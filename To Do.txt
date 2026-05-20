@@ -1,5 +1,30 @@
-1. add a parser
+﻿1. add a parser
 2. build a html gdi
 2.1. socket & local server
 2.2. javascript socket client
 2.3. UI
+3. add a better allocer
+4. reduce memory usage
+5. UTF-8ize everything
+5.1. or GBK...LOL
+
+
+-1. add this into README and every other files
+/* For *.cpp *.c *.hpp *.h *.bat *.ps1 *.txt included in this project.
+ *
+ ###############################################################################
+ # DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE                                 #
+ # Version 2, December 2004                                                    #
+ #                                                                             #
+ # Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>                            #
+ #                                                                             #
+ # Everyone is permitted to copy and distribute verbatim or modified copies of #
+ # this license document, and changing it is allowed as long as the name is    #
+ # changed.                                                                    #
+ #                                                                             #
+ # DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE                                 #
+ # TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION             #
+ #                                                                             #
+ # 0. You just DO WHAT THE FUCK YOU WANT TO.                                   #
+ ###############################################################################
+ */

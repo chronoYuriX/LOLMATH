@@ -296,16 +296,17 @@ struct lsMATHnode {
 struct MATHexpression {
 	lsMATHnode absyn;
 	MATHcontainer exp;
-	void load(const wchar_t* exp_str): exp(1024, 1.5f) {
+	MATHexpression(): exp(1024, 1.5f) { }
+	void load(const wchar_t* exp_str) {
 	    exp.size_used = 0;
-		for (MATHsize i = 0; exp_str[i] != L"\0"; i++) exp.append(exp_str[i], sizeof(wchar_t));
+		exp.append((void*)exp_str, (wcslen(exp_str) + 1) * sizeof(wchar_t));
 		parse();
 	}
 	void setval(const wchar_t* varname, MATHraw val) {
 		if (absyn.env.setval(varname, val) == MATH_FAILED) absyn.env.addvar(varname, val);
 	}
 	void parse() {
-		wchar_t exp_str = (wchar_t*)(exp.data);
+		wchar_t* exp_str = (wchar_t*)(exp.data);
 		for (MATHsize i = 0; i < exp.size_used; i++) {
 
 		}
@@ -391,7 +392,7 @@ void test() {
         	lsMATHnode l;
         	l.addnode(1.f, 1); l.addnode(2.f, 1); l.addnode(3.f, 1);
         	l.addnode(sigmaF, 1, 4);
-        	l.finish_build();
+        	l.finish_build(0);
         	wprintf(L"term 1 finished. result: %f\n", l.call().F);
 		}
         {
@@ -402,7 +403,7 @@ void test() {
         	l.addnode(sigmaF, 1, 4); l.addnode(sigmaF, 2, 4); l.addnode(sigmaF, 3, 4);
 			l.addnode(L"x", 4); l.env.addvar(L"x", makeraw(0.f));
         	l.addnode(sigmaF, 4, 0);
-        	l.finish_build();
+        	l.finish_build(1);
         	wprintf(L"term 2 finished. result: %f\n", l.call().F);
         	l.env.setval(L"x", makeraw(10.f));
         	wprintf(L"result(changed): %f\n", l.call().F);
