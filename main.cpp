@@ -13,9 +13,6 @@ typedef uint8_t MATHargs;
 typedef size_t  MATHsize;
 struct MATHraw;
 typedef MATHraw (*MATHfunc)(MATHraw*, MATHargs);
-const MATHsize MAXLEN_MATHEXPR = 1024, MAXLEN_MATHVAR_STR = 16;
-typedef wchar_t MATHexpr[MAXLEN_MATHEXPR];
-typedef wchar_t MATHvar_str[MAXLEN_MATHVAR_STR];
 struct MATHraw {
     union {
         MATHfloat F;
@@ -110,7 +107,7 @@ struct MATHcontainer {
         memcpy((BYTE*)data + size_used, item, size);
         size_used += size;
     }
-    void GC() {
+    void minimize() {
     	if (size_used < size_max) resize(size_used);
 	}
 };
@@ -249,22 +246,25 @@ struct lsMATHnode {
 		}
 	}
     void addnode(MATHfloat val, MATHargs trackerID) {
+    	if (iscompleted) return;
     	track(trackerID, nodes.size_used);
 		MATHnode cur_node(val);
 		nodes.append((void*)&cur_node, sizeof(cur_node));
 	}
     void addnode(MATHint val, MATHargs trackerID) {
+    	if (iscompleted) return;
     	track(trackerID, nodes.size_used);
 		MATHnode cur_node(val);
 		nodes.append((void*)&cur_node, sizeof(cur_node));
 	}
 	void addnode(const wchar_t* varname, MATHargs trackerID) {
+		if (iscompleted) return;
 		track(trackerID, nodes.size_used);
 		MATHnode cur_node(varname, &memspace);
 		nodes.append((void*)&cur_node, sizeof(cur_node));
 	}
 	void addnode(MATHfunc func, MATHargs using_trackerID, MATHargs trackerID) {
-		if (using_trackerID <= 0 || using_trackerID > tracker_counter) return;
+		if (using_trackerID <= 0 || using_trackerID > tracker_counter || iscompleted) return;
 		track(trackerID, nodes.size_used);
 		MATHcontainer* cur_tracker = ((MATHcontainer**)(trackers.data))[using_trackerID - 1];
 		MATHnode cur_node(func, (MATHsize*)(cur_tracker->data), cur_tracker->size_used / sizeof(MATHsize), &memspace);
@@ -274,9 +274,18 @@ struct lsMATHnode {
 		for (MATHargs i = 0; i < tracker_counter - 1; i++)
 			(((MATHcontainer*)(trackers.data) + i))->size_used = 0;
 	}
-	void finish_build() {
+	void finish_build(bool minimize) {
 		root_offset = nodes.size_used - sizeof(MATHnode);
+		if (minimize) {
+			nodes.minimize(); memspace.minimize(); trackers.minimize();
+			for (MATHargs i = 0; i < tracker_counter; i++) ((MATHcontainer**)(trackers.data))[i]->minimize();
+		}
 		iscompleted = 1;
+	}
+	void rebuild() {
+		reset_trackers();
+		nodes.size_used = memspace.size_used = 0;
+		iscompleted = 0;
 	}
 	MATHraw call() {
 		if (iscompleted) return ((MATHnode*)((BYTE*)(nodes.data) + root_offset))->call(&memspace, &env, &nodes);
@@ -284,7 +293,24 @@ struct lsMATHnode {
 	}
 };
 
+struct MATHexpression {
+	lsMATHnode absyn;
+	MATHcontainer exp;
+	void load(const wchar_t* exp_str): exp(1024, 1.5f) {
+	    exp.size_used = 0;
+		for (MATHsize i = 0; exp_str[i] != L"\0"; i++) exp.append(exp_str[i], sizeof(wchar_t));
+		parse();
+	}
+	void setval(const wchar_t* varname, MATHraw val) {
+		if (absyn.env.setval(varname, val) == MATH_FAILED) absyn.env.addvar(varname, val);
+	}
+	void parse() {
+		wchar_t exp_str = (wchar_t*)(exp.data);
+		for (MATHsize i = 0; i < exp.size_used; i++) {
 
+		}
+	}
+};
 
 
 
@@ -349,7 +375,7 @@ void test() {
             MATHnode* lsn0[5] = { &n0, &n1, &n2, &n3, &n4 };
             MATHnode n0_1(sigmaF, lsn0, 5, &memspace);
             wprintf(L"Sigma = %f\n", n0_1.call(&memspace, &e, NULL).F, NULL);
-            
+
             wprintf(L"x = %f\n", e.getval(L"x").F);
             e.setval(L"x", makeraw(10.f));
             wprintf(L"x(changed) = %f\n", e.getval(L"x").F);
