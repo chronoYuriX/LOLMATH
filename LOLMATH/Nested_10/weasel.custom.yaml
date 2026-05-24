@@ -1,0 +1,30 @@
+# weasel.custom.yaml
+patch:
+  style: # ========== 显示布局 ==========
+    font_face: "黑体"
+    font_point: 12
+    horizontal: true
+    inline_preedit: false
+    label_format: "%s."
+    color_scheme: my_theme # 使用配色
+    layout:
+      border: 0
+      margin_x: 6
+      margin_y: 5
+      hilite_padding_x: 4
+      hilite_padding_y: 4
+      candidate_spacing: 5
+      spacing: 6
+      round_corner: 0
+  # ========== 具体颜色（格式为 0xBBGGRR）==========
+  "preset_color_schemes/my_theme":
+    name: "Hacker"
+    author: "chrono_yurix"
+    back_color: 0x1A1A1A        # 背景色
+    border_color: 0x404040      # 边框色
+    text_color: 0x00FF00        # 普通文字色
+    candidate_text_color: 0x00FF00      # 候选词文字色
+    hilited_text_color: 0x00FF00        # 高亮编码文字
+    hilited_back_color: 0x1A401A        # 高亮背景
+    hilited_candidate_text_color: 0x000000      # 高亮候选词文字
+    hilited_candidate_back_color: 0x00FF00      # 高亮候选词背景
