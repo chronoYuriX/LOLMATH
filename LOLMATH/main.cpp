@@ -296,10 +296,12 @@ struct lsMATHnode {
 struct MATHexpression {
 	lsMATHnode absyn;
 	MATHcontainer exp;
-	MATHexpression(): exp(1024, 1.5f) { }
+    MATHsize exprlen;
+	MATHexpression(): exp(1024, 1.5f), exprlen(0) { }
 	void load(const wchar_t* exp_str) {
 	    exp.size_used = 0;
-		exp.append((void*)exp_str, (wcslen(exp_str) + 1) * sizeof(wchar_t));
+        exprlen = wcslen(exp_str);
+		exp.append((void*)exp_str, (exprlen + 1) * sizeof(wchar_t));
 		parse();
 	}
 	void setval(const wchar_t* varname, MATHraw val) {
@@ -307,10 +309,34 @@ struct MATHexpression {
 	}
 	void parse() {
 		wchar_t* exp_str = (wchar_t*)(exp.data);
-		for (MATHsize i = 0; i < exp.size_used; i++) {
+		for (MATHsize i = 0; i < exprlen; i++) {
 
 		}
 	}
+    MATHsize match_parentheses(MATHsize left) {
+        wchar_t* exp_str = (wchar_t*)(exp.data);
+        MATHsize left_parentheses = 1;
+        for (MATHsize i = left + 1; i < exprlen; i++) {
+            if (exp_str[i] == L'(') left_parentheses++;
+            else if (exp_str[i] == L')') {
+                if (--left_parentheses == 0) return i;
+                if (left_parentheses < 0) return ~0;
+            }
+        }
+        return ~0;
+    }
+    bool check_parentheses() {
+        wchar_t* exp_str = (wchar_t*)(exp.data);
+        MATHsize left_parentheses = 0;
+        for (MATHsize i = 0; i < exprlen; i++) {
+            if (exp_str[i] == L'(') left_parentheses++;
+            else if (exp_str[i] == L')') {
+                if (--left_parentheses == 0) return i;
+                if (left_parentheses < 0) return MATH_FAILED;
+            }
+        }
+        return MATH_SUCCESS;
+    }
 };
 
 
