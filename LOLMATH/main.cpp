@@ -319,8 +319,8 @@ struct MATHexpression {
         for (MATHsize i = left + 1; i < exprlen; i++) {
             if (exp_str[i] == L'(') left_parentheses++;
             else if (exp_str[i] == L')') {
+                if (left_parentheses == 0) return ~0;
                 if (--left_parentheses == 0) return i;
-                if (left_parentheses < 0) return ~0;
             }
         }
         return ~0;
@@ -331,12 +331,13 @@ struct MATHexpression {
         for (MATHsize i = 0; i < exprlen; i++) {
             if (exp_str[i] == L'(') left_parentheses++;
             else if (exp_str[i] == L')') {
+                if (left_parentheses == 0) return ~0;
                 if (--left_parentheses == 0) return i;
-                if (left_parentheses < 0) return MATH_FAILED;
             }
         }
         return MATH_SUCCESS;
     }
+    //bool 
 };
 
 
