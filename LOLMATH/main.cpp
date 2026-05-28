@@ -293,6 +293,12 @@ struct lsMATHnode {
 	}
 };
 
+const MATHtag TOKEN_OP = 1, TOKEN_NUM = 2, TOKEN_PARENTHESES = 3;
+struct MATHtoken {
+    MATHtag tag;
+    MATHraw rawdata;
+    
+}
 struct MATHexpression {
 	lsMATHnode absyn;
 	MATHcontainer exp;
@@ -337,7 +343,7 @@ struct MATHexpression {
         }
         return MATH_SUCCESS;
     }
-    //bool 
+    
 };
 
 
