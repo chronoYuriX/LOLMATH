@@ -19,6 +19,8 @@ struct MATHraw {
         MATHint I;
         MATHfunc func;
         void* rawptr;
+        size_t U;
+        wchar_t C;
     };
 };
 inline MATHraw makeraw(MATHint i) {
@@ -293,57 +295,81 @@ struct lsMATHnode {
 	}
 };
 
-const MATHtag TOKEN_OP = 1, TOKEN_NUM = 2, TOKEN_PARENTHESES = 3;
-struct MATHtoken {
-    MATHtag tag;
-    MATHraw rawdata;
-    MATHsize memloc;
-}
+const MATHtag TOKEN_FLOAT = 1, TOKEN_INT = 2, TOKEN_VAR = 3, TOKEN_OP = 4, TOKEN_FUNC = 5, TOKEN_PRT_LEFT = 6,
+	TOKEN_PRT_RIGHT = 7, TOKEN_EQUAL = 8;
 struct MATHexpression {
+	struct MATHtoken {
+		MATHtag tag;
+		MATHraw rawdata;
+		MATHtoken(MATHfloat val): tag(TOKEN_FLOAT) { rawdata.F = val; }
+		MATHtoken(MATHint val): tag(TOKEN_INT) { rawdata.I = val; }
+		MATHtoken(const wchar_t* str, MATHtag tag, lsMATHstaticstr* memspace): tag(tag) {
+			rawdata.U = memspace->addstr(str);
+		}
+		MATHtoken(wchar_t item) {
+			switch (item) {
+				case L'(': tag = TOKEN_PRT_LEFT; break;
+				case L')': tag = TOKEN_PRT_RIGHT; break;
+				case L'+': case L'-': case L'*': case L'/': case L'&': case L'|': case L'^': {
+					tag = TOKEN_OP;
+					rawdata.C = item;
+					break;
+				}
+				case L'=': tag = TOKEN_EQUAL; break;
+			}
+		}
+	};
 	lsMATHnode absyn;
 	MATHcontainer exp;
-    MATHsize exprlen;
-	MATHexpression(): exp(1024, 1.5f), exprlen(0) { }
+	MATHsize explen;
+	MATHexpression(): exp(1024, 1.5f) { }
 	void load(const wchar_t* exp_str) {
 	    exp.size_used = 0;
-        exprlen = wcslen(exp_str);
-		exp.append((void*)exp_str, (exprlen + 1) * sizeof(wchar_t));
+		exp.append((void*)exp_str, (wcslen(exp_str) + 1) * sizeof(wchar_t));
+		explen = wcslen(exp_str);
 		parse();
 	}
 	void setval(const wchar_t* varname, MATHraw val) {
 		if (absyn.env.setval(varname, val) == MATH_FAILED) absyn.env.addvar(varname, val);
 	}
-	void parse() {
+	void pair_prts(MATHsize left) {
 		wchar_t* exp_str = (wchar_t*)(exp.data);
-		for (MATHsize i = 0; i < exprlen; i++) {
-
+		MATHsize left_cnt = 1;
+		for (MATHsize i = left + 1; i < explen; i++) {
+			if (exp_str[left] == L'(') left_cnt++;
+			else if (exp_str[left] == L')') {
+				if (left_cnt == 0) {
+					errW("Invalid syntax: 1");
+					return ~0;
+				} if (--left_cnt == 0) return i;
+			}
+		}
+		errW("Invalid syntax: 2");
+		return ~0;
+	}
+	inline void isnum(wchar_t item) {
+		return item >= L'0' && item <= L'9' || item == L'.';
+	}
+	void parse_num(MATHsize* ptr) {
+		wchar_t* exp_str = (wchar_t*)(exp.data);
+		bool afterdot = 0;
+		while (isnum(exp_str[*ptr])) {
+			if (exp_str[*ptr] == L'.') {
+				if (afterdot) {
+					errW("Invalid syntax: 3");
+					return;
+				}
+				else afterdot = 1;
+			} else if (afterdot)
 		}
 	}
-    MATHsize match_parentheses(MATHsize left) {
-        wchar_t* exp_str = (wchar_t*)(exp.data);
-        MATHsize left_parentheses = 1;
-        for (MATHsize i = left + 1; i < exprlen; i++) {
-            if (exp_str[i] == L'(') left_parentheses++;
-            else if (exp_str[i] == L')') {
-                if (left_parentheses == 0) return ~0;
-                if (--left_parentheses == 0) return i;
-            }
-        }
-        return ~0;
-    }
-    bool check_parentheses() {
-        wchar_t* exp_str = (wchar_t*)(exp.data);
-        MATHsize left_parentheses = 0;
-        for (MATHsize i = 0; i < exprlen; i++) {
-            if (exp_str[i] == L'(') left_parentheses++;
-            else if (exp_str[i] == L')') {
-                if (left_parentheses == 0) return ~0;
-                if (--left_parentheses == 0) return i;
-            }
-        }
-        return MATH_SUCCESS;
-    }
-    
+	void parse() {
+		wchar_t* exp_str = (wchar_t*)(exp.data);
+		MATHcontainer tokens(512, 2.f);
+		for (MATHsize i = 0; i < exp.size_used; i++) {
+			if (isnum(item)) parse_num(&i);
+		}
+	}
 };
 
 
@@ -440,6 +466,7 @@ void test() {
         	wprintf(L"term 2 finished. result: %f\n", l.call().F);
         	l.env.setval(L"x", makeraw(10.f));
         	wprintf(L"result(changed): %f\n", l.call().F);
+        	Sleep(10000);
 		}
     }
 }
